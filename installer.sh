@@ -4,8 +4,8 @@ echo " Instalacija LastScannedAnalyzer plugina"
 echo "========================================================="
 
 # Podesite vase github podatke. Ako je repozitorijum javan ovo radi automatski.
-GITHUB_USER="ZAMENI_OVO"
-REPO_NAME="ZAMENI_OVO"
+GITHUB_USER="andrejicd"
+REPO_NAME="Last-Scanned-Analyzer"
 BRANCH="main"
 
 URL="https://github.com/${GITHUB_USER}/${REPO_NAME}/archive/refs/heads/${BRANCH}.zip"
