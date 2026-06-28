@@ -60,9 +60,9 @@ class LastScannedAnalyzerScreen(Screen):
         
         self.show_only_new = False
         
-        self["key_red"] = Label("Samo NOVI")
+        self["key_red"] = Label("Izlaz")
         self["key_green"] = Label("Kopiraj jedan")
-        self["key_yellow"] = Label("Obriši")
+        self["key_yellow"] = Label("Samo NOVI")
         self["key_blue"] = Label("Kopiraj NOVE")
         self["key_info"] = Label("INFO / OK")
         
@@ -72,7 +72,7 @@ class LastScannedAnalyzerScreen(Screen):
         
         self["ColorActions"] = ActionMap(["ColorActions"],
         {
-            "red": self.red_pressed,
+            "red": self.close,
             "green": self.green_pressed,
             "yellow": self.yellow_pressed,
             "blue": self.blue_pressed,
@@ -238,7 +238,9 @@ class LastScannedAnalyzerScreen(Screen):
         self.list[1] = "-" * 80
         
         self["list"].setList(self.list)
-        self["list"].moveToIndex(0)
+        # Obrisali smo moveToIndex jer u MenuList klasi to ne postoji i izazivalo je krah aplikacije.
+        if self["list"].instance is not None:
+            self["list"].instance.moveSelectionTo(0)
 
     def ok_pressed(self):
         idx = self["list"].getSelectedIndex()
@@ -251,13 +253,18 @@ class LastScannedAnalyzerScreen(Screen):
         except Exception:
             pass
 
-    def red_pressed(self):
-        self.show_only_new = not self.show_only_new
-        if self.show_only_new:
-            self["key_red"].setText("Prikaži SVE")
-        else:
-            self["key_red"].setText("Samo NOVI")
-        self.load_channels()
+    def yellow_pressed(self):
+        try:
+            self.show_only_new = not self.show_only_new
+            if self.show_only_new:
+                self["key_yellow"].setText("Prikaži SVE")
+                self.session.open(MessageBox, "Filter uključen: Prikazuju se SAMO NOVI kanali.", MessageBox.TYPE_INFO, timeout=2)
+            else:
+                self["key_yellow"].setText("Samo NOVI")
+                self.session.open(MessageBox, "Filter isključen: Prikazuju se SVI kanali.", MessageBox.TYPE_INFO, timeout=2)
+            self.load_channels()
+        except Exception as e:
+            self.session.open(MessageBox, "Greška u filteru: " + str(e), MessageBox.TYPE_ERROR)
 
     def info_pressed(self):
         idx = self["list"].getSelectedIndex()
@@ -268,35 +275,6 @@ class LastScannedAnalyzerScreen(Screen):
         msg = "Ime kanala: %s\nProvajder: %s\n\nReferenca: %s" % (name, provider, ref)
         self.session.open(MessageBox, msg, MessageBox.TYPE_INFO)
 
-    def yellow_pressed(self):
-        idx = self["list"].getSelectedIndex()
-        if idx < 2 or not self.channel_data[idx]:
-            return
-            
-        ref, name, _, _ = self.channel_data[idx]
-        base_dir = "/etc/enigma2"
-        last_scanned_file = os.path.join(base_dir, "userbouquet.LastScanned.tv")
-        
-        try:
-            with io.open(last_scanned_file, 'r', encoding='utf-8', errors='ignore') as f:
-                lines = f.readlines()
-                
-            with io.open(last_scanned_file, 'w', encoding='utf-8') as f:
-                for line in lines:
-                    if line.startswith("#SERVICE") and ref in line:
-                        continue 
-                    f.write(line)
-                    
-            try:
-                eDVBDB.getInstance().reloadBouquets()
-            except Exception:
-                pass
-                
-            self.load_channels() 
-            self.session.open(MessageBox, "Kanal '%s' obrisan iz Last Scanned!" % name, MessageBox.TYPE_INFO, timeout=2)
-            
-        except Exception as e:
-            self.session.open(MessageBox, "Greska pri brisanju: " + str(e), MessageBox.TYPE_ERROR)
 
     def green_pressed(self):
         idx = self["list"].getSelectedIndex()
