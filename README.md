@@ -4,7 +4,6 @@
 
 Ovaj plugin automatski analizira vaš fajl `userbouquet.LastScanned.tv` i upoređuje ga sa ostalim vašim korisničkim buketima. Svaki kanal koji ranije niste imali u listama automatski dobija status `[NOVI]`, što vam omogućava lako grupisanje.
 
-![Screenshot](link_do_slike_na_githubu_ili_imgur.png)
 
 ## Glavne Funkcije
 
