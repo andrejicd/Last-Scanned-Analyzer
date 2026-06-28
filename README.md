@@ -6,7 +6,6 @@
 
 Ovaj plugin automatski analizira vaš fajl `userbouquet.LastScanned.tv` i upoređuje ga sa ostalim vašim korisničkim buketima. Svaki kanal koji ranije niste imali u listama automatski dobija status `[NEW]`, kao i oznaku kvaliteta (`[HD]`, `[4K]`, `[Radio]`).
 
-![Screenshot](link_do_slike_na_githubu_ili_imgur.png)
 
 ## Premium Funkcije
 
