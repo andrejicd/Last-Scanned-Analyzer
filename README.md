@@ -12,9 +12,9 @@ Dizajniran je u modernom "Dark" HD interfejsu za maksimanu čitljivost na TV-u.
 
 - **OK Dugme (Zapping):** Pritisnite na bilo koji kanal iz liste da ga TV pusti u pozadini. Na taj način vidite program kanala pre nego što odlučite gde ga smeštate.
 - **INFO / EPG Dugme:** Prikazuje prozor sa stvarnim imenom kanala, provajderom (pročitanim direktno iz `lamedb`) i servisnom referencom.
-- **Crveno Dugme (Samo NOVI):** Brzi filter. Jednim klikom sakriva sve stare kanale i na ekranu ostavlja isključivo `[NOVI]` kanale.
+- **Crveno Dugme:** Izlaz iz aplikacije.
 - **Zeleno Dugme (Kopiraj kanal):** Dodaje selektovani kanal u korisnički buket po vašem izboru.
-- **Žuto Dugme (Obriši kanal):** Trajno briše "đubre" (neispravan/nepotreban kanal) iz Last Scanned liste.
+- **Žuto Dugme (Samo NOVI):** Brzi filter. Jednim klikom sakriva sve stare kanale i na ekranu ostavlja isključivo `[NOVI]` kanale. Ponovni pritisak prikazuje sve kanale.
 - **Plavo Dugme (Kopiraj SVE nove):** Svi kanali sa oznakom `[NOVI]` se istog trenutka prebacuju u buket koji izaberete. Najbolja opcija za masovno sortiranje!
 
 > Sve izmene se primenjuju momentalno, a plugin komunicira sa Enigma2 sistemom (`reloadBouquets`), pa nije potrebno naknadno restartovati risiver nakon prebacivanja kanala.
