@@ -19,16 +19,13 @@ except ImportError:
 
 class LastScannedAnalyzerScreen(Screen):
     skin = """
-        <screen name="LastScannedAnalyzerScreen" position="center,center" size="1280,720" flags="wfNoBorder" backgroundColor="transparent">
-            <!-- Glavna tamna pozadina (skoro skroz crna, A=10) -->
-            <eLabel position="0,0" size="1280,720" backgroundColor="#10000000" zPosition="-1" />
-            
-            <!-- Moderno Zaglavlje (Header) -->
-            <eLabel position="0,0" size="1280,60" backgroundColor="#000e355c" zPosition="0" />
-            <eLabel text="Analiza LastScanned Kanala" position="30,10" size="1000,40" font="Regular;32" foregroundColor="#ffffff" backgroundColor="#000e355c" transparent="1" halign="left" valign="center" zPosition="1" />
+        <screen name="LastScannedAnalyzerScreen" position="center,center" size="1280,720" title="LastScanned Analyzer" backgroundColor="#1e1e1e" flags="wfNoBorder">
+            <!-- Main Header -->
+            <eLabel position="0,0" size="1280,60" backgroundColor="#00142238" zPosition="-1" />
+            <eLabel text="LastScanned Channel Analyzer" position="30,10" size="1000,40" font="Regular;32" foregroundColor="#ffffff" backgroundColor="#000e355c" transparent="1" halign="left" valign="center" zPosition="1" />
             <widget name="key_info" position="1000,15" size="250,30" font="Regular;22" foregroundColor="#cccccc" backgroundColor="#000e355c" transparent="1" halign="right" valign="center" zPosition="1" />
             
-            <!-- Okvir za listu -->
+            <!-- List frame -->
             <eLabel position="30,80" size="700,550" backgroundColor="#00000000" zPosition="0" />
             <widget name="list" position="40,90" size="680,530" itemHeight="35" font="Regular;26" foregroundColor="#ffffff" scrollbarMode="showOnDemand" transparent="1" backgroundColor="#00000000" zPosition="1" />
             
@@ -63,13 +60,13 @@ class LastScannedAnalyzerScreen(Screen):
         
         self.show_only_new = False
         
-        self["key_red"] = Label("Izlaz")
-        self["key_green"] = Label("Obeleži / Poništi")
-        self["key_yellow"] = Label("Samo NOVI")
-        self["key_blue"] = Label("Kopiraj NOVE")
+        self["key_red"] = Label("Exit")
+        self["key_green"] = Label("Select / Deselect")
+        self["key_yellow"] = Label("New Only")
+        self["key_blue"] = Label("Copy NEW")
         self["key_info"] = Label("INFO / OK")
         
-        self["channel_info"] = Label("Pritisnite OK za puštanje kanala")
+        self["channel_info"] = Label("Press OK to play channel")
         
         self.list = []
         self.channel_data = []  # Cuvamo (ref, ime, provajder, is_new, type)
@@ -144,8 +141,8 @@ class LastScannedAnalyzerScreen(Screen):
                             except Exception:
                                 pass
                         
-                        name = "Nepoznato"
-                        provider = "Nepoznat"
+                        name = "Unknown"
+                        provider = "Unknown"
                         
                         if i + 1 < len(lines):
                             name = lines[i+1]
@@ -231,8 +228,8 @@ class LastScannedAnalyzerScreen(Screen):
                             continue
                             
                         # Default vrednosti
-                        name = "Nepoznat Kanal"
-                        provider = "Nepoznat Provajder"
+                        name = "Unknown Channel"
+                        provider = "Unknown Provider"
                         # Čitamo pravi Service Type iz same reference (npr. 1:0:19:... -> tip je 19 u hexu)
                         c_type = 1
                         try:
@@ -248,9 +245,9 @@ class LastScannedAnalyzerScreen(Screen):
                         # Formatiramo oznake
                         tags = ""
                         if is_new:
-                            tags += "[NOVI] "
+                            tags += "[NEW]  "
                         else:
-                            tags += "        " # 8 razmaka da bi se poravnalo sa [NOVI] 
+                            tags += "       " # 7 spaces
                         
                         if c_type == 2:
                             tags += "[Radio] "
@@ -268,10 +265,10 @@ class LastScannedAnalyzerScreen(Screen):
                         if is_new:
                             novi += 1
         except Exception as e:
-            self.list.append("Greska pri citanju LastScanned.tv: " + str(e))
+            self.list.append("Error reading LastScanned.tv: " + str(e))
             self.channel_data.append(None)
             
-        self.list[0] = "UKUPNO KANALA: %d  |  PRONADJENO NOVIH: %d" % (ukupno, novi)
+        self.list[0] = "TOTAL CHANNELS: %d  |  NEW FOUND: %d" % (ukupno, novi)
         self.list[1] = "-" * 80
         
         self["list"].setList(self.list)
@@ -294,9 +291,9 @@ class LastScannedAnalyzerScreen(Screen):
             elif c_type in [0x1f, 31]:
                 res_tag = "Ultra HD (4K)"
             elif c_type == 2:
-                res_tag = "Radio Kanal"
+                res_tag = "Radio Channel"
                 
-            info_text = "Kanal: %s\nProvajder: %s\nKvalitet: %s\n\n%s" % (name, provider, res_tag, ref)
+            info_text = "Channel: %s\nProvider: %s\nQuality: %s\n\n%s" % (name, provider, res_tag, ref)
             self["channel_info"].setText(info_text)
         except Exception:
             pass
@@ -340,15 +337,15 @@ class LastScannedAnalyzerScreen(Screen):
                     to_copy.append(ch)
                     
         if not to_copy:
-            self.session.open(MessageBox, "Nema kanala za kopiranje!", MessageBox.TYPE_INFO)
+            self.session.open(MessageBox, "No channels to copy!", MessageBox.TYPE_INFO)
             return
             
         try:
-            naslov = "prebaciti OBELEŽENE kanale:" if self.selected_refs else "prebaciti SVE NOVE kanale:"
+            naslov = "to copy SELECTED channels:" if self.selected_refs else "to copy ALL NEW channels:"
             self._channels_to_copy = to_copy
-            self.session.openWithCallback(self.bouquet_chosen_multi, ChoiceBox, title="Izaberi buket gde zelis " + naslov, list=self.get_bouquets())
+            self.session.openWithCallback(self.bouquet_chosen_multi, ChoiceBox, title="Choose bouquet " + naslov, list=self.get_bouquets())
         except Exception as e:
-            self.session.open(MessageBox, "Greska: " + str(e), MessageBox.TYPE_ERROR)
+            self.session.open(MessageBox, "Error: " + str(e), MessageBox.TYPE_ERROR)
 
     def bouquet_chosen_multi(self, choice):
         if choice is None:
@@ -378,11 +375,11 @@ class LastScannedAnalyzerScreen(Screen):
             except Exception:
                 pass
                 
-            self.session.open(MessageBox, "Uspešno prebačeno %d kanala u izabrani buket!" % len(channels), MessageBox.TYPE_INFO)
+            self.session.open(MessageBox, "Successfully copied %d channels to the selected bouquet!" % len(channels), MessageBox.TYPE_INFO)
             self.selected_refs.clear()
             self.load_channels()
         except Exception as e:
-            self.session.open(MessageBox, "Greška pri kopiranju: " + str(e), MessageBox.TYPE_ERROR)
+            self.session.open(MessageBox, "Copy Error: " + str(e), MessageBox.TYPE_ERROR)
 
     def get_bouquets(self):
         base_dir = "/etc/enigma2"
@@ -413,7 +410,7 @@ class LastScannedAnalyzerScreen(Screen):
             return
             
         ref, name, provider, is_new, c_type = self.channel_data[idx]
-        msg = "Ime kanala: %s\nProvajder: %s\n\nReferenca: %s" % (name, provider, ref)
+        msg = "Channel Name: %s\nProvider: %s\n\nReference: %s" % (name, provider, ref)
         self.session.open(MessageBox, msg, MessageBox.TYPE_INFO)
 
 
@@ -425,7 +422,7 @@ def Plugins(**kwargs):
     return [
         PluginDescriptor(
             name="LastScanned Analyzer", 
-            description="Analiziraj i sortiraj Last Scanned kanale", 
+            description="Analyze and sort Last Scanned channels", 
             where=PluginDescriptor.WHERE_PLUGINMENU, 
             icon="plugin.png",
             fnc=main
