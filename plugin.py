@@ -8,6 +8,7 @@ from Components.MenuList import MenuList
 from Components.Label import Label
 from Screens.ChoiceBox import ChoiceBox
 from Screens.MessageBox import MessageBox
+from Screens.VirtualKeyBoard import VirtualKeyBoard
 import os
 import glob
 import io
@@ -351,9 +352,52 @@ class LastScannedAnalyzerScreen(Screen):
         if choice is None:
             return
             
-        bq_file = choice[1]
-        channels = getattr(self, '_channels_to_copy', [])
+        target = choice[1]
         
+        if target == "CREATE_NEW":
+            self.session.openWithCallback(self.new_bouquet_name_entered, VirtualKeyBoard, title="Enter new bouquet name:", text="")
+            return
+            
+        self._copy_channels_to_bouquet(target)
+        
+    def new_bouquet_name_entered(self, name):
+        if not name:
+            return
+            
+        safe_name = "".join(x for x in name if x.isalnum() or x in " -_")
+        if not safe_name:
+            safe_name = "New_Bouquet"
+            
+        filename = "userbouquet.ls_%s.tv" % safe_name.replace(" ", "_").lower()
+        filepath = os.path.join("/etc/enigma2", filename)
+        
+        # Create new bouquet file
+        try:
+            with io.open(filepath, 'w', encoding='utf-8') as f:
+                f.write(u"#NAME %s\n" % name)
+                
+            # Add to bouquets.tv
+            bouquets_tv = "/etc/enigma2/bouquets.tv"
+            bq_line = '#SERVICE 1:7:1:0:0:0:0:0:0:0:FROM BOUQUET "%s" ORDER BY bouquet\n' % filename
+            
+            needs_append = True
+            if os.path.exists(bouquets_tv):
+                with io.open(bouquets_tv, 'r', encoding='utf-8', errors='ignore') as f:
+                    if bq_line in f.read():
+                        needs_append = False
+            
+            if needs_append:
+                with io.open(bouquets_tv, 'a', encoding='utf-8') as f:
+                    f.write(u"" + bq_line)
+                    
+        except Exception as e:
+            self.session.open(MessageBox, "Error creating bouquet: " + str(e), MessageBox.TYPE_ERROR)
+            return
+            
+        self._copy_channels_to_bouquet(filepath)
+
+    def _copy_channels_to_bouquet(self, bq_file):
+        channels = getattr(self, '_channels_to_copy', [])
         try:
             existing_refs = set()
             if os.path.exists(bq_file):
@@ -368,14 +412,14 @@ class LastScannedAnalyzerScreen(Screen):
                 for ch in channels:
                     ref = ch[0]
                     if ref not in existing_refs:
-                        f.write(u"\n#SERVICE %s\n" % ref)
+                        f.write(u"#SERVICE %s\n" % ref)
                         
             try:
                 eDVBDB.getInstance().reloadBouquets()
             except Exception:
                 pass
                 
-            self.session.open(MessageBox, "Successfully copied %d channels to the selected bouquet!" % len(channels), MessageBox.TYPE_INFO)
+            self.session.open(MessageBox, "Successfully copied %d channels!" % len(channels), MessageBox.TYPE_INFO)
             self.selected_refs.clear()
             self.load_channels()
         except Exception as e:
@@ -384,7 +428,7 @@ class LastScannedAnalyzerScreen(Screen):
     def get_bouquets(self):
         base_dir = "/etc/enigma2"
         bouquets_tv = os.path.join(base_dir, "bouquets.tv")
-        choices = []
+        choices = [("+ Create New Bouquet", "CREATE_NEW")]
         
         if os.path.exists(bouquets_tv):
             with io.open(bouquets_tv, "r", encoding="utf-8", errors="ignore") as f:
