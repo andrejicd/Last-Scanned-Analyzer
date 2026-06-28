@@ -412,7 +412,7 @@ class LastScannedAnalyzerScreen(Screen):
         if idx < 2 or not self.channel_data[idx]:
             return
             
-        ref, name, provider, is_new = self.channel_data[idx]
+        ref, name, provider, is_new, c_type = self.channel_data[idx]
         msg = "Ime kanala: %s\nProvajder: %s\n\nReferenca: %s" % (name, provider, ref)
         self.session.open(MessageBox, msg, MessageBox.TYPE_INFO)
 
