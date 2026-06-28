@@ -22,10 +22,9 @@ Dizajniran je u modernom "Dark" HD interfejsu za maksimanu čitljivost na TV-u.
 ## Instalacija
 
 Možete instalirati plugin direktno na vaš risiver preko Putty/Telnet-a komandom ispod:
-*(Napomena: Zamenite `TVOJ_GITHUB_USERNAME` i `IME_REPOZITORIJUMA` vašim stvarnim podacima)*
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/TVOJ_GITHUB_USERNAME/IME_REPOZITORIJUMA/main/installer.sh | sh
+wget -qO- https://raw.githubusercontent.com/andrejicd/Last-Scanned-Analyzer/refs/heads/main/installer.sh | sh
 ```
 
 ## Kompatibilnost
