@@ -258,10 +258,8 @@ class LastScannedAnalyzerScreen(Screen):
             self.show_only_new = not self.show_only_new
             if self.show_only_new:
                 self["key_yellow"].setText("Prikaži SVE")
-                self.session.open(MessageBox, "Filter uključen: Prikazuju se SAMO NOVI kanali.", MessageBox.TYPE_INFO, timeout=2)
             else:
                 self["key_yellow"].setText("Samo NOVI")
-                self.session.open(MessageBox, "Filter isključen: Prikazuju se SVI kanali.", MessageBox.TYPE_INFO, timeout=2)
             self.load_channels()
         except Exception as e:
             self.session.open(MessageBox, "Greška u filteru: " + str(e), MessageBox.TYPE_ERROR)
