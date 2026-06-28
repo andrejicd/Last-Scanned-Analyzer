@@ -18,12 +18,14 @@ try:
 except ImportError:
     pass
 
+PLUGIN_VERSION = "v1.1"
+
 class LastScannedAnalyzerScreen(Screen):
     skin = """
         <screen name="LastScannedAnalyzerScreen" position="center,center" size="1280,720" title="LastScanned Analyzer" backgroundColor="#1e1e1e" flags="wfNoBorder">
             <!-- Main Header -->
             <eLabel position="0,0" size="1280,60" backgroundColor="#00142238" zPosition="-1" />
-            <eLabel text="LastScanned Channel Analyzer" position="30,10" size="1000,40" font="Regular;32" foregroundColor="#ffffff" backgroundColor="#000e355c" transparent="1" halign="left" valign="center" zPosition="1" />
+            <eLabel text="LastScanned Channel Analyzer """ + PLUGIN_VERSION + """" position="30,10" size="1000,40" font="Regular;32" foregroundColor="#ffffff" backgroundColor="#000e355c" transparent="1" halign="left" valign="center" zPosition="1" />
             <widget name="key_info" position="1000,15" size="250,30" font="Regular;22" foregroundColor="#cccccc" backgroundColor="#000e355c" transparent="1" halign="right" valign="center" zPosition="1" />
             
             <!-- List frame -->
@@ -465,7 +467,7 @@ def main(session, **kwargs):
 def Plugins(**kwargs):
     return [
         PluginDescriptor(
-            name="LastScanned Analyzer", 
+            name="LastScanned Analyzer %s" % PLUGIN_VERSION, 
             description="Analyze and sort Last Scanned channels", 
             where=PluginDescriptor.WHERE_PLUGINMENU, 
             icon="plugin.png",
