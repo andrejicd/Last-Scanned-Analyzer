@@ -18,14 +18,15 @@ try:
 except ImportError:
     pass
 
-PLUGIN_VERSION = "v1.1"
+PLUGIN_VERSION = "v1.2"
 
 class LastScannedAnalyzerScreen(Screen):
     skin = """
         <screen name="LastScannedAnalyzerScreen" position="center,center" size="1280,720" title="LastScanned Analyzer" backgroundColor="#1e1e1e" flags="wfNoBorder">
             <!-- Main Header -->
             <eLabel position="0,0" size="1280,60" backgroundColor="#00142238" zPosition="-1" />
-            <eLabel text="LastScanned Channel Analyzer """ + PLUGIN_VERSION + """" position="30,10" size="1000,40" font="Regular;32" foregroundColor="#ffffff" backgroundColor="#000e355c" transparent="1" halign="left" valign="center" zPosition="1" />
+            <eLabel text="LastScanned Channel Analyzer """ + PLUGIN_VERSION + """" position="30,10" size="600,40" font="Regular;32" foregroundColor="#ffffff" backgroundColor="#000e355c" transparent="1" halign="left" valign="center" zPosition="1" />
+            <widget name="key_menu" position="650,15" size="300,30" font="Regular;22" foregroundColor="#cccccc" backgroundColor="#000e355c" transparent="1" halign="right" valign="center" zPosition="1" />
             <widget name="key_info" position="1000,15" size="250,30" font="Regular;22" foregroundColor="#cccccc" backgroundColor="#000e355c" transparent="1" halign="right" valign="center" zPosition="1" />
             
             <!-- List frame -->
@@ -68,6 +69,7 @@ class LastScannedAnalyzerScreen(Screen):
         self["key_yellow"] = Label("New Only")
         self["key_blue"] = Label("Copy NEW")
         self["key_info"] = Label("INFO / OK")
+        self["key_menu"] = Label("MENU = Scan")
         
         self["channel_info"] = Label("Press OK to play channel")
         
@@ -84,12 +86,13 @@ class LastScannedAnalyzerScreen(Screen):
             "blue": self.blue_pressed,
         }, 3)
         
-        self["SetupActions"] = ActionMap(["SetupActions", "EPGSelectActions"],
+        self["SetupActions"] = ActionMap(["SetupActions", "EPGSelectActions", "MenuActions"],
         {
             "cancel": self.close,
             "ok": self.ok_pressed,
             "info": self.info_pressed,
             "epg": self.info_pressed,
+            "menu": self.open_scan,
         }, -1)
         
         self.onLayoutFinish.append(self.load_channels)
@@ -449,6 +452,18 @@ class LastScannedAnalyzerScreen(Screen):
                         except Exception:
                             pass
         return choices
+
+    def open_scan(self):
+        try:
+            from Screens.ScanSetup import ScanSetup
+            self.session.openWithCallback(self.scan_finished, ScanSetup)
+        except ImportError:
+            self.session.open(MessageBox, "Greška: Ne mogu da učitam ScanSetup modul.", MessageBox.TYPE_ERROR)
+
+    def scan_finished(self, *args):
+        # Nakon zatvaranja prozora za skeniranje (ScanSetup), ponovo učitavamo kanale
+        # jer je fajl LastScanned.tv verovatno ažuriran novim kanalima.
+        self.load_channels()
 
     def info_pressed(self):
         idx = self["list"].getSelectedIndex()
