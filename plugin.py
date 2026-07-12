@@ -6,19 +6,24 @@ from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.MenuList import MenuList
 from Components.Label import Label
+from Components.Pixmap import Pixmap
 from Screens.ChoiceBox import ChoiceBox
 from Screens.MessageBox import MessageBox
 from Screens.VirtualKeyBoard import VirtualKeyBoard
+from Tools.LoadPixmap import LoadPixmap
 import os
 import glob
 import io
+import re
+from twisted.web.client import getPage, downloadPage
+from Components.Console import Console
 
 try:
     from enigma import eDVBDB, eServiceReference
 except ImportError:
     pass
 
-PLUGIN_VERSION = "v1.2"
+PLUGIN_VERSION = "v1.4"
 
 class LastScannedAnalyzerScreen(Screen):
     skin = """
@@ -34,7 +39,8 @@ class LastScannedAnalyzerScreen(Screen):
             <widget name="list" position="40,90" size="680,530" itemHeight="35" font="Regular;26" foregroundColor="#ffffff" scrollbarMode="showOnDemand" transparent="1" backgroundColor="#00000000" zPosition="1" />
             
             <!-- Informacije o Kanalu (desna strana umesto videa) -->
-            <widget name="channel_info" position="760,150" size="480,400" font="Regular;26" foregroundColor="#cccccc" backgroundColor="#00000000" transparent="1" halign="center" valign="top" zPosition="1" />
+            <widget name="picon" position="890,120" size="220,132" alphatest="blend" transparent="1" scale="1" zPosition="2" />
+            <widget name="channel_info" position="760,280" size="480,300" font="Regular;24" foregroundColor="#cccccc" backgroundColor="#00000000" transparent="1" halign="center" valign="top" zPosition="1" />
             
             <!-- Linija razdvajanja na dnu (svetlo siva) -->
             <eLabel position="30,650" size="1220,2" backgroundColor="#00666666" zPosition="0" />
@@ -69,9 +75,10 @@ class LastScannedAnalyzerScreen(Screen):
         self["key_yellow"] = Label("New Only")
         self["key_blue"] = Label("Copy NEW")
         self["key_info"] = Label("INFO / OK")
-        self["key_menu"] = Label("MENU = Scan")
+        self["key_menu"] = Label("MENU = Options")
         
-        self["channel_info"] = Label("Press OK to play channel")
+        self["picon"] = Pixmap()
+        self["channel_info"] = Label("Press OK to play channel\nand see Transponder / Picon info")
         
         self.list = []
         self.channel_data = []  # Cuvamo (ref, ime, provajder, is_new, type)
@@ -96,6 +103,7 @@ class LastScannedAnalyzerScreen(Screen):
         }, -1)
         
         self.onLayoutFinish.append(self.load_channels)
+        self.onLayoutFinish.append(self.run_auto_update_check)
 
     def get_service_tuple(self, ref_string):
         parts = ref_string.split(':')
@@ -112,22 +120,44 @@ class LastScannedAnalyzerScreen(Screen):
 
     def parse_lamedb(self, lamedb_path):
         services = {}
+        transponders = {}
         if not os.path.exists(lamedb_path):
-            return services
+            return services, transponders
             
         with io.open(lamedb_path, 'r', encoding='utf-8', errors='ignore') as f:
             lines = f.read().splitlines()
             
         in_services = False
+        in_transponders = False
         i = 0
+        current_tp_key = None
+        
         while i < len(lines):
             line = lines[i].strip()
+            
+            if line == "transponders":
+                in_transponders = True
+                i += 1
+                continue
+            if line == "end" and in_transponders:
+                in_transponders = False
+                i += 1
+                continue
             if line == "services":
                 in_services = True
                 i += 1
                 continue
             if line == "end" and in_services:
                 break
+                
+            if in_transponders:
+                if ':' in line and not line.startswith('s ') and not line.startswith('c ') and not line.startswith('t ') and not line.startswith('/'):
+                    current_tp_key = line
+                elif line.startswith('s ') or line.startswith('c ') or line.startswith('t '):
+                    if current_tp_key:
+                        transponders[current_tp_key] = line
+                i += 1
+                continue
                 
             if in_services and ':' in line:
                 parts = line.split(':')
@@ -139,6 +169,7 @@ class LastScannedAnalyzerScreen(Screen):
                         s_onid = int(parts[3], 16)
                         
                         key = (s_id, s_ns, s_tsid, s_onid)
+                        tp_key = "%08x:%04x:%04x" % (s_ns, s_tsid, s_onid)
                         
                         channel_type = 1
                         if len(parts) >= 5:
@@ -149,26 +180,34 @@ class LastScannedAnalyzerScreen(Screen):
                         
                         name = "Unknown"
                         provider = "Unknown"
+                        vpid = ""
+                        apid = ""
+                        encrypted = False
                         
                         if i + 1 < len(lines):
                             name = lines[i+1]
                         
-                        if i + 2 < len(lines) and lines[i+2].startswith("p:"):
+                        if i + 2 < len(lines) and (lines[i+2].startswith("p:") or lines[i+2].startswith("c:") or lines[i+2].startswith("C:") or lines[i+2].startswith("f:")):
                             prov_line = lines[i+2]
                             p_parts = prov_line.split(',')
                             for p in p_parts:
                                 if p.startswith('p:'):
                                     provider = p[2:]
-                                    break
+                                elif p.startswith('c:00'):
+                                    vpid = str(int(p[4:], 16))
+                                elif p.startswith('c:01'):
+                                    apid = str(int(p[4:], 16))
+                                elif p.startswith('C:') or p.startswith('c:09'):
+                                    encrypted = True
                                     
-                        services[key] = (name, provider, channel_type)
+                        services[key] = (name, provider, channel_type, tp_key, vpid, apid, encrypted)
                         i += 2
                         continue
                     except ValueError:
                         pass
             i += 1
             
-        return services
+        return services, transponders
 
     def load_channels(self):
         base_dir = "/etc/enigma2"
@@ -184,7 +223,7 @@ class LastScannedAnalyzerScreen(Screen):
             self["list"].setList(self.list)
             return
 
-        lamedb_info = self.parse_lamedb(lamedb_file)
+        lamedb_info, self.lamedb_transponders = self.parse_lamedb(lamedb_file)
         existing_services = set()
         
         bouquet_files = glob.glob(os.path.join(base_dir, "userbouquet.*.tv")) + \
@@ -245,8 +284,12 @@ class LastScannedAnalyzerScreen(Screen):
                         except:
                             pass
                             
+                        tp_key = ""
+                        vpid = ""
+                        apid = ""
+                        encrypted = False
                         if key and key in lamedb_info:
-                            name, provider, _ = lamedb_info[key]
+                            name, provider, _, tp_key, vpid, apid, encrypted = lamedb_info[key]
                             
                         # Formatiramo oznake
                         tags = ""
@@ -254,6 +297,11 @@ class LastScannedAnalyzerScreen(Screen):
                             tags += "[NEW]  "
                         else:
                             tags += "       " # 7 spaces
+                            
+                        if encrypted:
+                            tags += "[$] "
+                        else:
+                            tags += "    "
                         
                         if c_type == 2:
                             tags += "[Radio] "
@@ -267,7 +315,7 @@ class LastScannedAnalyzerScreen(Screen):
                         display_text = "%s%s%s" % (sel_tag, tags, name)
                         
                         self.list.append(display_text)
-                        self.channel_data.append((ref, name, provider, is_new, c_type))
+                        self.channel_data.append((ref, name, provider, is_new, c_type, tp_key, vpid, apid, encrypted))
                         if is_new:
                             novi += 1
         except Exception as e:
@@ -282,14 +330,107 @@ class LastScannedAnalyzerScreen(Screen):
         if self["list"].instance is not None:
             self["list"].instance.moveSelectionTo(0)
 
+    def get_tp_info(self, tp_key):
+        if not hasattr(self, 'lamedb_transponders') or not tp_key:
+            return "No Transponder Info"
+        tp_data = self.lamedb_transponders.get(tp_key, "")
+        if not tp_data:
+            return "Unknown Transponder"
+            
+        tp_data = tp_data.strip()
+        try:
+            if tp_data.startswith('s '):
+                parts = tp_data[2:].split(':')
+                freq = int(parts[0]) / 1000
+                sr = int(parts[1]) / 1000
+                pol_map = {0: 'H', 1: 'V', 2: 'L', 3: 'R'}
+                pol = pol_map.get(int(parts[2]), '?')
+                pos = int(parts[4]) if len(parts) > 4 else 0
+                dir = "E"
+                if pos > 1800:
+                    pos = 3600 - pos
+                    dir = "W"
+                    
+                fec_map = {0:'Auto', 1:'1/2', 2:'2/3', 3:'3/4', 4:'5/6', 5:'7/8', 6:'8/9', 7:'3/5', 8:'4/5', 9:'9/10', 10:'None'}
+                fec = fec_map.get(int(parts[3]) if len(parts)>3 else 0, 'Auto')
+                
+                sys_map = {0: 'DVB-S', 1: 'DVB-S2'}
+                system = sys_map.get(int(parts[7]) if len(parts)>7 else 0, 'DVB-S')
+                
+                mod_map = {0:'Auto', 1:'QPSK', 2:'8PSK', 3:'16APSK', 4:'32APSK'}
+                modulation = mod_map.get(int(parts[8]) if len(parts)>8 else 1, 'QPSK')
+                
+                return "Satellite: %.1f°%s\nFreq: %d MHz\nPol: %s   SR: %d\n%s  %s  FEC: %s" % (pos / 10.0, dir, freq, pol, sr, system, modulation, fec)
+            elif tp_data.startswith('c '):
+                parts = tp_data[2:].split(':')
+                return "Cable\nFreq: %d MHz" % (int(parts[0]) / 1000)
+            elif tp_data.startswith('t '):
+                parts = tp_data[2:].split(':')
+                return "Terrestrial (DVB-T)\nFreq: %d MHz" % (int(parts[0]) / 1000000)
+        except Exception:
+            return "Error parsing TP"
+        return "Unknown DVB Type"
+
+    def show_picon(self, ref_string):
+        ref_parts = ref_string.split(':')
+        if len(ref_parts) > 10:
+            ref_parts = ref_parts[:10]
+            
+        # Picon names always expect the first part to be '1' even for IPTV (4097)
+        if len(ref_parts) > 0 and ref_parts[0] != '1':
+            try:
+                # Samo ako je neki broj tipa 4097, 5002, itd.
+                if int(ref_parts[0], 16) != 1:
+                    ref_parts[0] = '1'
+            except:
+                ref_parts[0] = '1'
+                
+        while len(ref_parts) > 0 and ref_parts[-1] == '':
+            ref_parts.pop()
+            
+        picon_name = "_".join(ref_parts) + ".png"
+        picon_name_lower = picon_name.lower()
+        picon_paths = [
+            "/usr/share/enigma2/picon/",
+            "/media/usb/picon/",
+            "/media/hdd/picon/",
+            "/hdd/picon/",
+            "/picon/",
+            "/usr/share/picon/"
+        ]
+        
+        found_path = ""
+        for p in picon_paths:
+            path = os.path.join(p, picon_name)
+            path_lower = os.path.join(p, picon_name_lower)
+            if os.path.exists(path):
+                self["picon"].instance.setPixmap(LoadPixmap(path))
+                self["picon"].show()
+                found_path = path
+                break
+            elif os.path.exists(path_lower):
+                self["picon"].instance.setPixmap(LoadPixmap(path_lower))
+                self["picon"].show()
+                found_path = path_lower
+                break
+                
+        if not found_path:
+            self["picon"].hide()
+            
+        return found_path, picon_name_lower
+
     def ok_pressed(self):
         idx = self["list"].getSelectedIndex()
         if idx < 2 or not self.channel_data[idx]:
             return
             
-        ref, name, provider, is_new, c_type = self.channel_data[idx]
+        ref, name, provider, is_new, c_type, tp_key, vpid, apid, encrypted = self.channel_data[idx]
         try:
             self.session.nav.playService(eServiceReference(ref))
+            
+            # Prikaz Picona i vracanje debug putanje
+            p_path, p_expected = self.show_picon(ref)
+            
             # Prikaz informacija u interfejsu
             res_tag = "Standard (SD)"
             if c_type in [0x19, 25, 0x11, 17]:
@@ -299,7 +440,18 @@ class LastScannedAnalyzerScreen(Screen):
             elif c_type == 2:
                 res_tag = "Radio Channel"
                 
-            info_text = "Channel: %s\nProvider: %s\nQuality: %s\n\n%s" % (name, provider, res_tag, ref)
+            enc_tag = "🔒 Encrypted" if encrypted else "🔓 Free To Air (FTA)"
+            pid_info = "VPID: %s  |  APID: %s" % (vpid if vpid else "N/A", apid if apid else "N/A")
+                
+            tp_info = self.get_tp_info(tp_key)
+                
+            info_text = "Channel: %s\nProvider: %s\nStatus: %s\n%s\n\n%s\n\n%s" % (name, provider, enc_tag, pid_info, tp_info, ref)
+            
+            if p_path:
+                info_text += "\n\n[Picon: %s]" % p_path
+            else:
+                info_text += "\n\n[Picon not found: %s]" % p_expected
+                
             self["channel_info"].setText(info_text)
         except Exception:
             pass
@@ -454,11 +606,102 @@ class LastScannedAnalyzerScreen(Screen):
         return choices
 
     def open_scan(self):
+        options = [
+            ("Scan Channels", "scan"),
+            ("Check for Updates", "update")
+        ]
+        self.session.openWithCallback(self.menu_callback, ChoiceBox, title="Options Menu", list=options)
+
+    def menu_callback(self, choice):
+        if choice:
+            if choice[1] == "scan":
+                try:
+                    from Screens.ScanSetup import ScanSetup
+                    self.session.openWithCallback(self.scan_finished, ScanSetup)
+                except ImportError:
+                    self.session.open(MessageBox, "Greška: Ne mogu da učitam ScanSetup modul.", MessageBox.TYPE_ERROR)
+            elif choice[1] == "update":
+                self.check_for_update(auto_check=False)
+
+    def run_auto_update_check(self):
+        self.check_for_update(auto_check=True)
+
+    def check_for_update(self, auto_check=False):
+        url = b"https://raw.githubusercontent.com/andrejicd/Last-Scanned-Analyzer/main/plugin.py"
         try:
-            from Screens.ScanSetup import ScanSetup
-            self.session.openWithCallback(self.scan_finished, ScanSetup)
-        except ImportError:
-            self.session.open(MessageBox, "Greška: Ne mogu da učitam ScanSetup modul.", MessageBox.TYPE_ERROR)
+            getPage(url, timeout=5).addCallback(self.update_check_callback, auto_check).addErrback(self.update_check_errback, auto_check)
+        except Exception as e:
+            if not auto_check:
+                self.session.open(MessageBox, "Error checking for updates: " + str(e), MessageBox.TYPE_ERROR)
+
+    def update_check_callback(self, html, auto_check):
+        try:
+            if not isinstance(html, str):
+                html = html.decode('utf-8')
+            m = re.search(r'PLUGIN_VERSION\s*=\s*"([^"]+)"', html)
+            if m:
+                remote_version = m.group(1)
+                
+                def parse_ver(v):
+                    v_clean = ""
+                    for char in v:
+                        if char.isdigit() or char == '.':
+                            v_clean += char
+                    return [int(x) for x in v_clean.split('.') if x]
+
+                remote_parts = parse_ver(remote_version)
+                local_parts = parse_ver(PLUGIN_VERSION)
+                
+                is_newer = False
+                for i in range(max(len(remote_parts), len(local_parts))):
+                    r = remote_parts[i] if i < len(remote_parts) else 0
+                    l = local_parts[i] if i < len(local_parts) else 0
+                    if r > l:
+                        is_newer = True
+                        break
+                    elif r < l:
+                        break
+
+                if is_newer:
+                    msg = "New version %s is available! (Current: %s)\n\nDo you want to update now?" % (remote_version, PLUGIN_VERSION)
+                    self.session.openWithCallback(self.update_prompt_callback, MessageBox, msg, MessageBox.TYPE_YESNO)
+                else:
+                    if not auto_check:
+                        self.session.open(MessageBox, "You have the latest version (%s)." % PLUGIN_VERSION, MessageBox.TYPE_INFO)
+            else:
+                if not auto_check:
+                    self.session.open(MessageBox, "Could not determine remote version.", MessageBox.TYPE_ERROR)
+        except Exception as e:
+            if not auto_check:
+                self.session.open(MessageBox, "Error parsing update data: " + str(e), MessageBox.TYPE_ERROR)
+
+    def update_check_errback(self, error, auto_check):
+        if not auto_check:
+            self.session.open(MessageBox, "Failed to connect to update server.", MessageBox.TYPE_ERROR)
+
+    def update_prompt_callback(self, answer):
+        if answer:
+            self.do_update()
+
+    def do_update(self):
+        url = b"https://raw.githubusercontent.com/andrejicd/Last-Scanned-Analyzer/main/installer.sh"
+        self.installer_path = "/tmp/installer.sh"
+        try:
+            downloadPage(url, self.installer_path).addCallback(self.update_download_callback).addErrback(self.update_download_errback)
+        except Exception as e:
+            self.session.open(MessageBox, "Error starting download: " + str(e), MessageBox.TYPE_ERROR)
+
+    def update_download_callback(self, result):
+        os.chmod(self.installer_path, 0o755)
+        self.session.open(MessageBox, "Updating plugin...\nGUI will restart automatically if successful.", MessageBox.TYPE_INFO, timeout=5)
+        self.console = Console()
+        self.console.ePopen(self.installer_path, self.update_finished)
+
+    def update_download_errback(self, error):
+        self.session.open(MessageBox, "Failed to download update script.", MessageBox.TYPE_ERROR)
+
+    def update_finished(self, result, retval, extra_args):
+        pass
 
     def scan_finished(self, *args):
         # Nakon zatvaranja prozora za skeniranje (ScanSetup), ponovo učitavamo kanale
@@ -470,8 +713,10 @@ class LastScannedAnalyzerScreen(Screen):
         if idx < 2 or not self.channel_data[idx]:
             return
             
-        ref, name, provider, is_new, c_type = self.channel_data[idx]
-        msg = "Channel Name: %s\nProvider: %s\n\nReference: %s" % (name, provider, ref)
+        ref, name, provider, is_new, c_type, tp_key, vpid, apid, encrypted = self.channel_data[idx]
+        tp_info = self.get_tp_info(tp_key)
+        enc_tag = "Encrypted" if encrypted else "FTA"
+        msg = "Channel Name: %s\nProvider: %s\nStatus: %s\n\n%s\n\nReference: %s" % (name, provider, enc_tag, tp_info, ref)
         self.session.open(MessageBox, msg, MessageBox.TYPE_INFO)
 
 

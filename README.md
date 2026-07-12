@@ -1,5 +1,5 @@
 # LastScanned Analyzer za Enigma2 (Premium Edition)
-![Version](https://img.shields.io/badge/version-v1.2-blue.svg)
+![Version](https://img.shields.io/badge/version-v1.4-blue.svg)
 
 *For the **English** version, scroll down.*
 
@@ -13,8 +13,8 @@ Ovaj plugin automatski analizira vaš fajl `userbouquet.LastScanned.tv` i upore�
 
 Dizajniran je u modernom "Dark" HD interfejsu (1280x720) za maksimalnu čitljivost na TV-u, a nudi napredne funkcije grupisanja i pregleda:
 
-- **INFO / EPG Dugme:** Prikazuje detaljne podatke o selektovanom kanalu sa desne strane ekrana (Rezolucija, Provajder i Referenca). Tako tačno znate šta prebacujete!
-- **MENU Dugme (Brzo Skeniranje):** Direktno iz plugina otvara ugrađeni meni za skeniranje kanala. Nakon skeniranja, vraća vas nazad u plugin i automatski osvežava listu prikazujući novoskenirane kanale.
+- **INFO / EPG Dugme:** Prikazuje logotip kanala (Picon) i detaljne informacije o transponderu (Satelit, Frekvencija, Polarizacija, Symbol Rate), kao i osnovne podatke (Rezoluciju, Provajdera). Tako tačno znate odakle je taj kanal došao!
+- **MENU Dugme (Opcije):** Otvara meni iz koga možete izabrati "Scan Channels" (za brzo pokretanje Enigma2 skeniranja kanala) ili "Check for Updates" (za manuelnu proveru i preuzimanje novijih verzija plugina).
 - **Zeleno Dugme (Obeležavanje / Multi-Select):** Ne morate više da prebacujete kanal po kanal. Pritiskom na zeleno dugme stavljate zvezdicu `[ * ]` na kanale koje želite da zadržite.
 - **Plavo Dugme (Kopiraj SVE nove):** Svi kanali sa oznakom `[NEW]` (ili oni koje ste obeležili zelenim dugmetom) se prebacuju u buket. Možete izabrati postojeći buket iz liste ili kliknuti na **"+ Create New Bouquet"** da direktno na ekranu ukucate ime i napravite potpuno novi buket! Najbolja opcija za masovno sortiranje.
 - **Žuto Dugme (Samo NOVI):** Brzi filter. Jednim klikom sakriva sve stare kanale i na ekranu ostavlja isključivo `[NEW]` kanale. Ponovni pritisak prikazuje sve kanale.
@@ -33,7 +33,7 @@ wget -qO- https://raw.githubusercontent.com/andrejicd/Last-Scanned-Analyzer/refs
 ---
 
 # LastScanned Analyzer for Enigma2 (Premium Edition)
-![Version](https://img.shields.io/badge/version-v1.2-blue.svg)
+![Version](https://img.shields.io/badge/version-v1.4-blue.svg)
 
 **LastScanned Analyzer** is a powerful and advanced Enigma2 plugin designed to make analyzing, reviewing, and copying newly scanned channels (Last Scanned) incredibly easy.
 
@@ -43,8 +43,8 @@ This plugin automatically analyzes your `userbouquet.LastScanned.tv` file and cr
 
 Designed with a modern "Dark" HD interface (1280x720) for maximum readability on your TV, it offers advanced grouping and preview features:
 
-- **INFO / EPG Button:** Displays detailed data about the selected channel on the right side of the screen (Resolution, Provider, and Service Reference). You know exactly what you are copying!
-- **MENU Button (Quick Scan):** Instantly opens the built-in Enigma2 channel scanner directly from the plugin. Once scanning is done, it seamlessly returns you to the plugin and automatically reloads the list to show your newly scanned channels.
+- **INFO / EPG Button:** Displays the channel logo (Picon) and detailed transponder information (Satellite Position, Frequency, Polarization, Symbol Rate) along with standard details. You know exactly what you are copying!
+- **MENU Button (Options):** Opens the options menu where you can choose "Scan Channels" (to instantly launch the built-in Enigma2 channel scanner) or "Check for Updates" (to manually check for and install new plugin updates).
 - **Green Button (Select / Multi-Select):** You no longer have to move channels one by one. Pressing the green button adds a star `[ * ]` to the channels you want to keep.
 - **Blue Button (Copy NEW):** All channels marked as `[NEW]` (or those selected with the green button) are transferred to a bouquet. You can choose an existing bouquet from the list or select **"+ Create New Bouquet"** to type a name using the on-screen keyboard and create a brand new bouquet instantly!
 - **Yellow Button (New Only):** A quick toggle filter. A single click hides all old channels, leaving only the `[NEW]` channels on screen. Pressing it again shows all channels.
@@ -63,3 +63,19 @@ wget -qO- https://raw.githubusercontent.com/andrejicd/Last-Scanned-Analyzer/refs
 ## Compatibility
 The plugin is written to support both older systems (Python 2) and modern ones (Python 3).
 It has been tested on OpenATV and other popular Enigma2 images.
+
+## Changelog / Release Notes
+
+### v1.4
+- **Auto-Update System:** Added automatic background checks for new versions on startup.
+- **Manual Update:** Replaced the direct Scan button with an Options menu offering a "Check for Updates" feature.
+- **In-App Installer:** You can now update the plugin with a single click directly from the UI without using Telnet.
+- **Fix:** Implemented accurate semantic version comparison to prevent false update prompts.
+
+### v1.3
+- **Premium UI:** Redesigned modern "Dark" HD interface.
+- **Picon & TP Info:** Pressing `INFO` now displays the channel's Picon and detailed transponder data.
+- **Quick Scan:** Integrated the `MENU` button to launch the Enigma2 scanner and auto-refresh the list upon return.
+- **Multi-Select:** Use the `Green` button to tag multiple channels `[ * ]` for copying.
+- **Smart Filter:** Use the `Yellow` button to instantly hide old channels and see only the `[NEW]` ones.
+- **Bouquet Creator:** Use the `Blue` button to copy selected/new channels, and even create a brand new bouquet using the virtual keyboard.
