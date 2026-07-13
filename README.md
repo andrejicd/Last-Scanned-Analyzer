@@ -66,10 +66,7 @@ It has been tested on OpenATV and other popular Enigma2 images.
 
 ## Preview
 
-## Galerija
-
-![Glavni meni](Screenshot/screenshot1.jpg)
-![Detalji kanala](Screenshot/screenshot2.jpg)
-![Multi-Select](Screenshot/screenshot3.jpg)
-![Filter](Screenshot/screenshot4.jpg)
-![Bouquet Creator](Screenshot/screenshot5.jpg)
+| Pregled 1 | Pregled 2 | Pregled 3 |
+| :---: | :---: | :---: |
+| ![S1](Screenshot/screenshot1.jpg) | ![S2](Screenshot/screenshot2.jpg) | ![S3](Screenshot/screenshot3.jpg) |
+| ![S4](Screenshot/screenshot4.jpg) | ![S5](Screenshot/screenshot5.jpg) | |
