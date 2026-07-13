@@ -1,8 +1,8 @@
 # LastScanned Analyzer za Enigma2 (Premium Edition)
 ![Version](https://img.shields.io/badge/version-v1.4-blue.svg)
 <!-- Primer kako da ubaciš screenshot-ove -->
-![Screenshot aplikacije](/Screeshot/screenshot1.jpg)
-![Prikaz liste](/Screeshot/screenshot2.jpg)
+![Screenshot aplikacije](/Screenshot/screenshot1.jpg)
+![Prikaz liste](/Screenshot/screenshot2.jpg)
 
 *For the **English** version, scroll down.*
 
