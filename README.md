@@ -68,5 +68,6 @@ It has been tested on OpenATV and other popular Enigma2 images.
 
 | Pregled 1 | Pregled 2 | Pregled 3 |
 | :---: | :---: | :---: |
-| ![S1](Screenshot/screenshot1.jpg) | ![S2](Screenshot/screenshot2.jpg) | ![S3](Screenshot/screenshot3.jpg) |
-| ![S4](Screenshot/screenshot4.jpg) | ![S5](Screenshot/screenshot5.jpg) | |
+| ![S1](Screenshot/screenshot1.jpg) | ![S2](Screenshot/screenshot2.jpg) |
+| ![S3](Screenshot/screenshot3.jpg) | ![S4](Screenshot/screenshot4.jpg) |
+| ![S5](Screenshot/screenshot5.jpg) | |
