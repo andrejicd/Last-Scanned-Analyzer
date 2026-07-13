@@ -64,18 +64,8 @@ wget -qO- https://raw.githubusercontent.com/andrejicd/Last-Scanned-Analyzer/refs
 The plugin is written to support both older systems (Python 2) and modern ones (Python 3).
 It has been tested on OpenATV and other popular Enigma2 images.
 
-## Changelog / Release Notes
+## Preview
 
-### v1.4
-- **Auto-Update System:** Added automatic background checks for new versions on startup.
-- **Manual Update:** Replaced the direct Scan button with an Options menu offering a "Check for Updates" feature.
-- **In-App Installer:** You can now update the plugin with a single click directly from the UI without using Telnet.
-- **Fix:** Implemented accurate semantic version comparison to prevent false update prompts.
-
-### v1.3
-- **Premium UI:** Redesigned modern "Dark" HD interface.
-- **Picon & TP Info:** Pressing `INFO` now displays the channel's Picon and detailed transponder data.
-- **Quick Scan:** Integrated the `MENU` button to launch the Enigma2 scanner and auto-refresh the list upon return.
-- **Multi-Select:** Use the `Green` button to tag multiple channels `[ * ]` for copying.
-- **Smart Filter:** Use the `Yellow` button to instantly hide old channels and see only the `[NEW]` ones.
-- **Bouquet Creator:** Use the `Blue` button to copy selected/new channels, and even create a brand new bouquet using the virtual keyboard.
+| Glavni meni | Detalji kanala |
+| :--- | :--- |
+| ![Preview 1](Screenshot/screenshot1.jpg) | ![Preview 2](Screenshot/screenshot2.jpg) |![Preview 3](Screenshot/screenshot3.jpg) |![Preview 4](Screenshot/screenshot4.jpg) |![Preview 5](Screenshot/screenshot5.jpg) |
