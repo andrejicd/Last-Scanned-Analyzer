@@ -1,5 +1,7 @@
-screenshot1.jpg
-screenshot2.jpg
-screenshot3.jpg
-screenshot4.jpg
-screenshot5.jpg
+## Galerija
+
+![Glavni meni](Screenshot/screenshot1.jpg)
+![Detalji kanala](Screenshot/screenshot2.jpg)
+![Multi-Select](Screenshot/screenshot3.jpg)
+![Filter](Screenshot/screenshot4.jpg)
+![Bouquet Creator](Screenshot/screenshot5.jpg)
