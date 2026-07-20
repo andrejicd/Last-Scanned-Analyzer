@@ -1,5 +1,5 @@
 # LastScanned Analyzer za Enigma2 (Premium Edition)
-![Version](https://img.shields.io/badge/version-v1.4-blue.svg)
+![Version](https://img.shields.io/badge/version-v1.7-blue.svg)
 
 *For the **English** version, scroll down.*
 
