@@ -1,0 +1,60 @@
+name: Build and Release IPK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Build IPK Package
+      run: |
+        python build_ipk.py
+
+    - name: Get Version
+      id: get_version
+      run: |
+        VERSION=$(python -c "
+        import os, re
+        plugin_path = 'plugin.py'
+        if os.path.exists(plugin_path):
+            with open(plugin_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                m = re.search(r'PLUGIN_VERSION\s*=\s*[\"\'\']([^\"\'\']+)[\"\'\']', content)
+                if m:
+                    ver = m.group(1)
+                    if ver.lower().startswith('v'):
+                        ver = ver[1:]
+                    print(ver)
+                    exit(0)
+        print('1.0')
+        ")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Using Version: $VERSION"
+
+    - name: Create Release and Upload IPK
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        name: Release v${{ steps.get_version.outputs.version }}
+        draft: false
+        prerelease: false
+        files: |
+          *.ipk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
